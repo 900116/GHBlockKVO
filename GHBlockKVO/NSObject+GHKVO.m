@@ -137,7 +137,9 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
             self.eventBags = bags;
         });
     }
-    [self addObserver:self.eventBags forKeyPath:keyPath options:options context:NULL];
+    if (!self.eventBags.eventDict[keyPath]) {
+         [self addObserver:self.eventBags forKeyPath:keyPath options:options context:NULL];
+    }
     return [bags addObservedKeyPath:keyPath callBack:callBack onMain:onMain];
 }
 

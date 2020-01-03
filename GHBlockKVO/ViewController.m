@@ -20,19 +20,24 @@
     // Do any additional setup after loading the view.
     UILabel *label = [UILabel new];
     GHKVOEventToken *token = [label gh_addKeypath:@"text" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
-        NSLog(@"%@",object);
+        NSLog(@"token1:%@",change);
     }];
     //when label dealloc the kvo autoremove
     
+    label.text = @"hello";
+    //only token1 print
    
     // onMain
-//    GHKVOEventToken *token = [label gh_addKeypathOnMain:@"text" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
-//        NSLog(@"%@",object);
-//    }];
-    label.text = @"hello";
+    [label gh_addKeypathOnMain:@"text" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
+        NSLog(@"token2:%@",change);
+    }];
     label.text = @"hi";
+    //token1 token2 print
+
     [label gh_removeObserved:token];
     label.text = @"byebye";
+    
+    //only token2 print
 }
 
 
