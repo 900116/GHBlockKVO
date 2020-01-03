@@ -30,7 +30,12 @@
     [person gh_removeObserved:token];
     [person gh_removeObserved:token2];
 
+    //自动移除
+    [person gh_addKeypathOnMain:@"name" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
+        NSLog(@"%@",object);
+    }];
 
+    //person dealloc的时候，token3被移除
 }
 
 ```
