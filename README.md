@@ -1,6 +1,6 @@
 ## GHBlockKVO
 基于Block的KVO框架，支持一对多，对象消失后自动remove  
-新增基于block的调位置，对象消失后自动remove
+新增基于block的通知，对象消失后自动remove
 
 ### Demo
 ``` objc
