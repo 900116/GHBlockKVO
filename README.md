@@ -1,5 +1,6 @@
 ## GHBlockKVO
-基于Block的KVO框架，支持一对多，对象消失后自动remove
+基于Block的KVO框架，支持一对多，对象消失后自动remove  
+新增基于block的调位置，对象消失后自动remove
 
 ### Demo
 ``` objc
@@ -39,20 +40,19 @@
     }];
 
     //增加通知监听
-    GHNotiEventToken *notiToken = [self gh_addNotification:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
+    GHNotiEventToken *notiToken = [person gh_addNotification:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
         NSLog(@"noti_token1:%@",nf);
     }];
 
-    [self gh_addNotificationOnMain:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
+    [person gh_addNotificationOnMain:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
         NSLog(@"noti_token2:%@",nf);
     }];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
     
-    [self gh_removeNotiToken:notiToken];
+    [person gh_removeNotiToken:notiToken];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
-
 
     //person dealloc的时候，token3,notitoken2被移除
 
