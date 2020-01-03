@@ -47,7 +47,19 @@
     //no notify
     label.hidden = YES;
     
+    GHNotiEventToken *notiToken = [label gh_addNotification:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
+        NSLog(@"noti_token1:%@",nf);
+    }];
     
+    [label gh_addNotificationOnMain:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
+        NSLog(@"noti_token2:%@",nf);
+    }];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
+    
+    [label gh_removeNotiToken:notiToken];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
     //only token2 print
 }
 
