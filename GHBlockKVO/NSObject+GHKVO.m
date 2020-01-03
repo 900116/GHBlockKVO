@@ -114,6 +114,15 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
     }];
 }
 
+- (void)removeKeyPath: (NSString *)keyPath {
+    [self safeExecute:^{
+        if (self.eventDict[keyPath]) {
+            [self.eventDict removeObjectForKey:keyPath];
+            [self.observed removeObserver:self forKeyPath:keyPath];
+        }
+    }];
+}
+
 - (void)dealloc {
     //移除所有监听
     [self safeExecute:^{
@@ -153,6 +162,10 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
 
 - (void)gh_removeObserved: (GHKVOEventToken *)token {
     [self.eventBags removeObserved:token];
+}
+
+- (void)gh_removeKeyPath: (NSString *)keyPath {
+    [self.eventBags removeKeyPath:keyPath];
 }
 
 void * const kEventBagsKey = "kEventBagsKey";

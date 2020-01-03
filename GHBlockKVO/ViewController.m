@@ -23,6 +23,7 @@
         NSLog(@"token1:%@",change);
     }];
     //when label dealloc the kvo autoremove
+    [label addObserver:self forKeyPath:@"text" options:NSKeyValueObservingOptionNew context:NULL];
     
     label.text = @"hello";
     //only token1 print
@@ -37,8 +38,22 @@
     [label gh_removeObserved:token];
     label.text = @"byebye";
     
+    [label gh_addKeypath:@"hidden" options:NSKeyValueObservingOptionNew callBack:^(id  _Nonnull object, NSDictionary<NSKeyValueChangeKey,id> * _Nonnull change, void * _Nonnull context) {
+         NSLog(@"token3:%@",change);
+    }];
+    
+    [label gh_removeKeyPath:@"text"];
+    label.text = @"dddd";
+    //no notify
+    label.hidden = YES;
+    
+    
     //only token2 print
 }
 
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    
+}
 
 @end

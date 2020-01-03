@@ -21,6 +21,8 @@ typedef void(^GHKVOCallback)(id object,NSDictionary<NSKeyValueChangeKey,id> *cha
 
 - (void)gh_removeObserved: (GHKVOEventToken *)token;
 
+- (void)gh_removeKeyPath: (NSString *)keyPath;
+
 @end
 
 NS_ASSUME_NONNULL_END

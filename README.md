@@ -30,6 +30,9 @@
     [person gh_removeObserved:token];
     [person gh_removeObserved:token2];
 
+    //移除所有的text监听
+    [person gh_removeKeyPath:@"name"];
+
     //自动移除
     [person gh_addKeypathOnMain:@"name" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
         NSLog(@"%@",object);
