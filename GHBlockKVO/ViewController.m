@@ -19,7 +19,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     UILabel *label = [UILabel new];
-    GHKVOEventToken *token = [label gh_addKeypath:@"text" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
+    GHEventToken *token = [label gh_addKeypath:@"text" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
         NSLog(@"token1:%@",change);
     }];
     //when label dealloc the kvo autoremove
@@ -47,7 +47,7 @@
     //no notify
     label.hidden = YES;
     
-    GHNotiEventToken *notiToken = [label gh_addNotification:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
+    GHEventToken *notiToken = [label gh_addNotification:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
         NSLog(@"noti_token1:%@",nf);
     }];
     

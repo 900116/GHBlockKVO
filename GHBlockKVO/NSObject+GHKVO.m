@@ -9,10 +9,34 @@
 #import "NSObject+GHKVO.h"
 #import <objc/runtime.h>
 
-@interface GHKVOEventToken : NSObject
+@interface GHEventToken : NSObject
 
 @property (nonatomic,assign) BOOL onMain;
 @property (nonatomic,copy) NSString *tid;
+
+- (NSString *)key;
+
+@end
+
+@implementation GHEventToken
+
+- (instancetype)initWithOnMain:(BOOL)onMain {
+    self = [super init];
+    if (self) {
+        self.onMain = onMain;
+        self.tid = [NSUUID UUID].UUIDString;
+    }
+    return self;
+}
+
+- (NSString *)key {
+    return nil;
+}
+
+@end
+
+@interface GHKVOEventToken : GHEventToken
+
 @property (nonatomic,copy) NSString *keyPath;
 @property (nonatomic,copy) GHKVOCallback callBack;
 
@@ -21,22 +45,22 @@
 @implementation GHKVOEventToken
 
 - (instancetype)initWithCallBack:(GHKVOCallback)callBack keyPath:(NSString *)keyPath onMain:(BOOL)onMain{
-    self = [super init];
+    self = [super initWithOnMain:onMain];
     if (self) {
         self.callBack = callBack;
-        self.onMain = onMain;
-        self.tid = [NSUUID UUID].UUIDString;
         self.keyPath = keyPath;
     }
     return self;
 }
 
+- (NSString *)key {
+    return self.keyPath;
+}
+
 @end
 
-@interface GHNotiEventToken : NSObject
+@interface GHNotiEventToken : GHEventToken
 
-@property (nonatomic,assign) BOOL onMain;
-@property (nonatomic,copy) NSString *tid;
 @property (nonatomic,copy) NSNotificationName name;
 @property (nonatomic,copy) GHNotiCallback callBack;
 
@@ -45,20 +69,23 @@
 @implementation GHNotiEventToken
 
 - (instancetype)initWithCallBack:(GHNotiCallback)callBack name:(NSNotificationName)name onMain:(BOOL)onMain{
-    self = [super init];
+    self = [super initWithOnMain:onMain];
     if (self) {
         self.callBack = callBack;
-        self.onMain = onMain;
-        self.tid = [NSUUID UUID].UUIDString;
         self.name = name;
     }
     return self;
 }
 
+
+- (NSString *)key {
+    return self.name;
+}
+
 @end
 
 
-@interface GHKVOEventBags : NSObject
+@interface GHEventBags : NSObject
 
 @property (nonatomic,strong) NSMutableDictionary <NSString*,NSMutableArray *> *kvoEventDict;
 @property (nonatomic,strong) NSMutableDictionary <NSString*,NSMutableArray *> *notiEventDict;
@@ -68,7 +95,7 @@
 
 @end
 
-@implementation GHKVOEventBags
+@implementation GHEventBags
 
 - (instancetype)init
 {
@@ -82,40 +109,28 @@
     return self;
 }
 
-typedef void (^GHKVOSafeEvecuteBlk)(void);
+typedef void (^GHSafeEvecuteBlk)(void);
 
-#pragma mark KVO
-
-- (void)safeKVOExecute:(GHKVOSafeEvecuteBlk)blk {
-    dispatch_semaphore_wait(self.kvolock, DISPATCH_TIME_FOREVER);
+#pragma mark base
+- (void)safeExecute:(GHSafeEvecuteBlk)blk isKVO:(BOOL)isKVO{
+    dispatch_semaphore_t lock = self.notilock;
+    if (isKVO) {
+        lock = self.kvolock;
+    }
+    dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
     blk();
-    dispatch_semaphore_signal(self.kvolock);
+    dispatch_semaphore_signal(lock);
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    [self postAllMsg:object change:change context:context keyPath:keyPath];
-}
-
-- (GHKVOEventToken *)addObservedKeyPath: (NSString *)keypath callBack:(GHKVOCallback)callBack onMain:(BOOL)onMain {
-    __block GHKVOEventToken *res = nil;
-    [self safeKVOExecute:^{
-        GHKVOEventToken *token = [[GHKVOEventToken alloc]initWithCallBack:callBack keyPath:keypath onMain:onMain];
-        NSMutableArray *tokens = self.kvoEventDict[keypath];
-        if (!tokens) {
-            tokens = [NSMutableArray new];
+- (void)removeObserved: (GHEventToken *)token isKVO:(BOOL)isKVO{
+    [self safeExecute:^{
+        NSDictionary *opDict = self.notiEventDict;
+        if (isKVO) {
+            opDict = self.kvoEventDict;
         }
-        [tokens addObject:token];
-        self.kvoEventDict[keypath] = tokens;
-        res = token;
-    }];
-    return res;
-}
-
-- (void)removeObserved: (GHKVOEventToken *)token{
-    [self safeKVOExecute:^{
-        NSMutableArray *tokens = self.kvoEventDict[token.keyPath];
-        GHKVOEventToken *rt = nil;
-        for (GHKVOEventToken *token in tokens) {
+        NSMutableArray *tokens = opDict[token.key];
+        GHEventToken *rt = nil;
+        for (GHEventToken *token in tokens) {
             if ([token.tid isEqualToString:token.tid]) {
                 rt = token;
                 break;
@@ -124,16 +139,75 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
         if (rt) {
             [tokens removeObject:rt];
         }
-    }];
+    } isKVO:isKVO];
+}
+
+- (void)removeKey: (NSString *)key object:(id)object isKVO:(BOOL)isKVO{
+    [self safeExecute:^{
+        NSMutableDictionary *opDict = self.notiEventDict;
+        if (isKVO) {
+            opDict = self.kvoEventDict;
+        }
+        if (opDict[key]) {
+            if (isKVO) {
+                [opDict removeObjectForKey:key];
+            } else {
+                [[NSNotificationCenter defaultCenter] removeObserver:self name:key object:object];
+            }
+            [opDict removeObjectForKey:key];
+        }
+    } isKVO:isKVO];
+}
+
+- (GHEventToken *)addTokenForKey: (NSString *)key object:(id)object options:(NSKeyValueObservingOptions)options callBack:(id)callBack onMain:(BOOL)onMain isKVO:(BOOL)isKVO{
+    __block GHEventToken *res = nil;
+    [self safeExecute:^{
+        GHEventToken *token = nil;
+        NSMutableDictionary *opDict = nil;
+        if (isKVO) {
+            token = [[GHKVOEventToken alloc]initWithCallBack:callBack keyPath:key onMain:onMain];
+            opDict = self.kvoEventDict;
+            if (!opDict[key]) {
+                 [self.observed addObserver:self forKeyPath:key options:options context:NULL];
+            }
+        } else {
+            token = [[GHNotiEventToken alloc]initWithCallBack:callBack name:key onMain:onMain];
+            opDict = self.notiEventDict;
+            if (!opDict[key]) {
+                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(receiveNotification:) name:key object:object];
+            }
+        }
+        NSMutableArray *tokens = opDict[key];
+        if (!tokens) {
+            tokens = [NSMutableArray new];
+        }
+        [tokens addObject:token];
+        opDict[key] = tokens;
+        res = token;
+    } isKVO:isKVO];
+    return res;
+}
+
+#pragma mark KVO
+
+- (void)safeKVOExecute:(GHSafeEvecuteBlk)blk {
+    [self safeExecute:blk isKVO:YES];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    [self postAllMsg:object change:change context:context keyPath:keyPath];
+}
+
+- (GHEventToken *)addObservedKeyPath: (NSString *)keypath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack onMain:(BOOL)onMain {
+    return [self addTokenForKey:keypath object:nil options:options callBack:callBack onMain:onMain isKVO:YES];
+}
+
+- (void)removeObserved: (GHKVOEventToken *)token{
+    [self removeObserved:token isKVO:YES];
 }
 
 - (void)removeKeyPath: (NSString *)keyPath {
-    [self safeKVOExecute:^{
-        if (self.kvoEventDict[keyPath]) {
-            [self.kvoEventDict removeObjectForKey:keyPath];
-            [self.observed removeObserver:self forKeyPath:keyPath];
-        }
-    }];
+    [self removeKey:keyPath object:nil isKVO:YES];
 }
 
 
@@ -157,33 +231,16 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
 
 #pragma mark Notification
 
-- (void)safeNotiExecute:(GHKVOSafeEvecuteBlk)blk {
-    dispatch_semaphore_wait(self.notilock, DISPATCH_TIME_FOREVER);
-    blk();
-    dispatch_semaphore_signal(self.notilock);
+- (void)safeNotiExecute:(GHSafeEvecuteBlk)blk {
+    [self safeExecute:blk isKVO:NO];
 }
 
 - (void)removeNotiName:(NSNotificationName)name object:(id)object{
-    [self safeNotiExecute:^{
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:name object:object];
-        [self.notiEventDict removeObjectForKey:name];
-    }];
+     [self removeKey:name object:object isKVO:NO];
 }
 
 - (void)removeNotiToken: (GHNotiEventToken *)token {
-    [self safeNotiExecute:^{
-        NSMutableArray *tokens = self.notiEventDict[token.name];
-        GHNotiEventToken *rt = nil;
-        for (GHNotiEventToken *token in tokens) {
-            if ([token.tid isEqualToString:token.tid]) {
-                rt = token;
-                break;
-            }
-        }
-        if (rt) {
-            [tokens removeObject:rt];
-        }
-    }];
+    [self removeObserved:token isKVO:NO];
 }
 
 - (void)receiveNotification:(NSNotification *)nf {
@@ -203,22 +260,8 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
     }];
 }
 
-- (GHNotiEventToken *)addNotificationForName: (NSNotificationName)name object:(id)object callBack:(GHNotiCallback)callBack onMain:(BOOL)onMain{
-    if (![self.notiEventDict objectForKey:name]) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(receiveNotification:) name:name object:object];
-    }
-    __block GHNotiEventToken *resToken = nil;
-    [self safeNotiExecute:^{
-        GHNotiEventToken *token = [[GHNotiEventToken alloc]initWithCallBack:callBack name:name onMain:onMain];
-        NSMutableArray *tokens = self.notiEventDict[name];
-        if (!tokens) {
-            tokens = [NSMutableArray new];
-        }
-        [tokens addObject:token];
-        self.notiEventDict[name] = tokens;
-        resToken = token;
-    }];
-    return resToken;
+- (GHEventToken *)addNotificationForName: (NSNotificationName)name object:(id)object callBack:(GHNotiCallback)callBack onMain:(BOOL)onMain{
+    return [self addTokenForKey:name object:object options:NSKeyValueObservingOptionNew callBack:callBack onMain:onMain isKVO:NO];
 }
 
 - (void)dealloc {
@@ -240,27 +283,24 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
 
 #pragma mark KVO
 
-- (GHKVOEventToken *)gh_addKeypath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack onMain:(BOOL)onMain {
-    __block GHKVOEventBags *bags = self.eventBags;
+- (GHEventToken *)gh_addKeypath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack onMain:(BOOL)onMain {
+    __block GHEventBags *bags = self.eventBags;
     if (!bags) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            bags = [[GHKVOEventBags alloc]init];
+            bags = [[GHEventBags alloc]init];
             bags.observed = self;
             self.eventBags = bags;
         });
     }
-    if (!self.eventBags.kvoEventDict[keyPath]) {
-         [self addObserver:self.eventBags forKeyPath:keyPath options:options context:NULL];
-    }
-    return [bags addObservedKeyPath:keyPath callBack:callBack onMain:onMain];
+    return [bags addObservedKeyPath:keyPath options:options callBack:callBack onMain:onMain];
 }
 
-- (GHKVOEventToken *)gh_addKeypath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack {
+- (GHEventToken *)gh_addKeypath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack {
     return [self gh_addKeypath:keyPath options:options callBack:callBack onMain:NO];
 }
 
-- (GHKVOEventToken *)gh_addKeypathOnMain:(NSString *)keyPath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack {
+- (GHEventToken *)gh_addKeypathOnMain:(NSString *)keyPath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack {
     return [self gh_addKeypath:keyPath options:options callBack:callBack onMain:YES];
 }
 
@@ -274,11 +314,11 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
 
 #pragma mark Noti
 
-- (GHNotiEventToken *)gh_addNotification: (NSNotificationName)name object:(_Nullable id)object callBack:(GHNotiCallback)callBack {
+- (GHEventToken *)gh_addNotification: (NSNotificationName)name object:(_Nullable id)object callBack:(GHNotiCallback)callBack {
     return [self.eventBags addNotificationForName:name object:object callBack:callBack onMain:NO];
 }
 
-- (GHNotiEventToken *)gh_addNotificationOnMain: (NSNotificationName)name object:(_Nullable id)object callBack:(GHNotiCallback)callBack {
+- (GHEventToken *)gh_addNotificationOnMain: (NSNotificationName)name object:(_Nullable id)object callBack:(GHNotiCallback)callBack {
     return [self.eventBags addNotificationForName:name object:object callBack:callBack onMain:NO];
 }
 
@@ -294,11 +334,11 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
 
 void * const kEventBagsKey = "kEventBagsKey";
 
-- (GHKVOEventBags *)eventBags {
+- (GHEventBags *)eventBags {
     return objc_getAssociatedObject(self, kEventBagsKey);
 }
 
-- (void)setEventBags:(GHKVOEventBags *)eventBags {
+- (void)setEventBags:(GHEventBags *)eventBags {
     return objc_setAssociatedObject(self, kEventBagsKey, eventBags, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
