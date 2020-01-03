@@ -38,7 +38,25 @@
         NSLog(@"%@",object);
     }];
 
-    //person dealloc的时候，token3被移除
+    //增加通知监听
+    GHNotiEventToken *notiToken = [self gh_addNotification:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
+        NSLog(@"noti_token1:%@",nf);
+    }];
+
+    [self gh_addNotificationOnMain:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
+        NSLog(@"noti_token2:%@",nf);
+    }];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
+    
+    [self gh_removeNotiToken:notiToken];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
+
+
+    //person dealloc的时候，token3,notitoken2被移除
+
+
 }
 
 ```

@@ -27,7 +27,7 @@ typedef void(^GHNotiCallback)(NSNotification *nf);
 - (GHNotiEventToken *)gh_addNotification: (NSNotificationName)name object:(_Nullable id)object callBack:(GHNotiCallback)callBack;
 - (GHNotiEventToken *)gh_addNotificationOnMain: (NSNotificationName)name object:(_Nullable id)object callBack:(GHNotiCallback)callBack;
 
-- (void)gh_removeNotiName: (NSNotificationName)name;
+- (void)gh_removeNotiName: (NSNotificationName)name object:(_Nullable id)object;
 - (void)gh_removeNotiToken: (GHNotiEventToken *)token;
 
 @end

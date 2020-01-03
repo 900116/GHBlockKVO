@@ -163,8 +163,11 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
     dispatch_semaphore_signal(self.notilock);
 }
 
-- (void)removeNotiName:(NSNotificationName)name {
-    [[NSNotificationCenter defaultCenter] removeObserver:self forKeyPath:name];
+- (void)removeNotiName:(NSNotificationName)name object:(id)object{
+    [self safeNotiExecute:^{
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:name object:object];
+        [self.notiEventDict removeObjectForKey:name];
+    }];
 }
 
 - (void)removeNotiToken: (GHNotiEventToken *)token {
@@ -279,8 +282,8 @@ typedef void (^GHKVOSafeEvecuteBlk)(void);
     return [self.eventBags addNotificationForName:name object:object callBack:callBack onMain:NO];
 }
 
-- (void)gh_removeNotiName: (NSNotificationName)name {
-    [self.eventBags removeNotiName:name];
+- (void)gh_removeNotiName: (NSNotificationName)name object:(_Nullable id)object{
+    [self.eventBags removeNotiName:name object:object];
 }
 
 

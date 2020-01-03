@@ -60,7 +60,10 @@
     [label gh_removeNotiToken:notiToken];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
-    //only token2 print
+    
+    [label gh_removeNotiName:@"hello" object:nil];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
 }
 
 
