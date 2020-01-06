@@ -16,12 +16,12 @@
     Person *person = [Person new];
 
     //与set方法在同一个线程
-    GHKVOEventToken *token = [person gh_addKeypath:@"name" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
+    GHEventToken *token = [person gh_addKeypath:@"name" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
         NSLog(@"%@",object);
     }];
 
     //回调在主线程
-    GHKVOEventToken *token2 = [person gh_addKeypathOnMain:@"name" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
+    GHEventToken *token2 = [person gh_addKeypathOnMain:@"name" options:NSKeyValueObservingOptionNew callBack:^(id object, NSDictionary<NSKeyValueChangeKey,id> *change, void *context) {
         NSLog(@"%@",object);
     }];
 
@@ -40,7 +40,7 @@
     }];
 
     //增加通知监听
-    GHNotiEventToken *notiToken = [person gh_addNotification:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
+    GHEventToken *notiToken = [person gh_addNotification:@"hello" object:nil callBack:^(NSNotification * _Nonnull nf) {
         NSLog(@"noti_token1:%@",nf);
     }];
 
