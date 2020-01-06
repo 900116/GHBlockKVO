@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class GHEventToken;
-@class GHEventToken;
+
 typedef void(^GHKVOCallback)(id object,NSDictionary<NSKeyValueChangeKey,id> *change,void * context);
 typedef void(^GHNotiCallback)(NSNotification *nf);
 
