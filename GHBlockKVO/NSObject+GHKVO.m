@@ -122,7 +122,7 @@ typedef void (^GHSafeEvecuteBlk)(void);
     dispatch_semaphore_signal(lock);
 }
 
-- (void)removeObserved: (GHEventToken *)token isKVO:(BOOL)isKVO{
+- (void)removeObserver: (GHEventToken *)token isKVO:(BOOL)isKVO{
     [self safeExecute:^{
         NSDictionary *opDict = self.notiEventDict;
         if (isKVO) {
@@ -202,8 +202,8 @@ typedef void (^GHSafeEvecuteBlk)(void);
     return [self addTokenForKey:keypath object:nil options:options callBack:callBack onMain:onMain isKVO:YES];
 }
 
-- (void)removeObserved: (GHKVOEventToken *)token{
-    [self removeObserved:token isKVO:YES];
+- (void)removeObserver: (GHKVOEventToken *)token{
+    [self removeObserver:token isKVO:YES];
 }
 
 - (void)removeKeyPath: (NSString *)keyPath {
@@ -240,7 +240,7 @@ typedef void (^GHSafeEvecuteBlk)(void);
 }
 
 - (void)removeNotiToken: (GHNotiEventToken *)token {
-    [self removeObserved:token isKVO:NO];
+    [self removeObserver:token isKVO:NO];
 }
 
 - (void)receiveNotification:(NSNotification *)nf {
@@ -304,8 +304,8 @@ typedef void (^GHSafeEvecuteBlk)(void);
     return [self gh_addKeypath:keyPath options:options callBack:callBack onMain:YES];
 }
 
-- (void)gh_removeObserved: (GHKVOEventToken *)token {
-    [self.eventBags removeObserved:token];
+- (void)gh_removeObserver: (GHKVOEventToken *)token {
+    [self.eventBags removeObserver:token];
 }
 
 - (void)gh_removeKeyPath: (NSString *)keyPath {
@@ -327,7 +327,7 @@ typedef void (^GHSafeEvecuteBlk)(void);
 }
 
 
-- (void)gh_removeNotiToken: (GHNotiEventToken *)token {
+- (void)gh_removeNotiObserver: (GHNotiEventToken *)token {
     [self.eventBags removeNotiToken:token];
 }
 

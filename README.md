@@ -28,8 +28,8 @@
     person.name = @"Jack";
 
     //移除监听
-    [person gh_removeObserved:token];
-    [person gh_removeObserved:token2];
+    [person gh_removeObserver:token];
+    [person gh_removeObserver:token2];
 
     //移除所有的text监听
     [person gh_removeKeyPath:@"name"];
@@ -50,7 +50,7 @@
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
     
-    [person gh_removeNotiToken:notiToken];
+    [person gh_removeNotiObserver:notiToken];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
 

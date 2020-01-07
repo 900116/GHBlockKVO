@@ -20,7 +20,7 @@ typedef void(^GHNotiCallback)(NSNotification *nf);
 - (GHEventToken *)gh_addKeypath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack;
 - (GHEventToken *)gh_addKeypathOnMain:(NSString *)keyPath options:(NSKeyValueObservingOptions)options callBack:(GHKVOCallback)callBack;
 
-- (void)gh_removeObserved: (GHEventToken *)token;
+- (void)gh_removeObserver: (GHEventToken *)token;
 - (void)gh_removeKeyPath: (NSString *)keyPath;
 
 
@@ -28,7 +28,7 @@ typedef void(^GHNotiCallback)(NSNotification *nf);
 - (GHEventToken *)gh_addNotificationOnMain: (NSNotificationName)name object:(_Nullable id)object callBack:(GHNotiCallback)callBack;
 
 - (void)gh_removeNotiName: (NSNotificationName)name object:(_Nullable id)object;
-- (void)gh_removeNotiToken: (GHEventToken *)token;
+- (void)gh_removeNotiObserver: (GHEventToken *)token;
 
 @end
 

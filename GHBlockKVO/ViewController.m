@@ -35,7 +35,7 @@
     label.text = @"hi";
     //token1 token2 print
 
-    [label gh_removeObserved:token];
+    [label gh_removeObserver:token];
     label.text = @"byebye";
     
     [label gh_addKeypath:@"hidden" options:NSKeyValueObservingOptionNew callBack:^(id  _Nonnull object, NSDictionary<NSKeyValueChangeKey,id> * _Nonnull change, void * _Nonnull context) {
@@ -57,7 +57,7 @@
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
     
-    [label gh_removeNotiToken:notiToken];
+    [label gh_removeNotiObserver:notiToken];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"hello" object:nil];
     
